@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import { useToast } from "@/components/ui/use-toast";
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Upload } from 'lucide-react';
@@ -9,6 +10,7 @@ const FileUploadAndProcess = ({ onProcessComplete }) => {
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { toast } = useToast();
 
   const onDrop = useCallback((acceptedFiles) => {
     setFiles(acceptedFiles);
@@ -23,17 +25,27 @@ const FileUploadAndProcess = ({ onProcessComplete }) => {
     files.forEach((file) => formData.append('files', file));
 
     try {
-      const response = await axios.post('/api/process-files', formData, {
+      const response = await axios.post('http://localhost:5000/upload', formData, {
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
         },
       });
       onProcessComplete(response.data);
+      toast({
+        title: "Files processed successfully",
+        description: "Your files have been uploaded and processed.",
+      });
     } catch (error) {
       console.error('Error uploading files:', error);
+      toast({
+        title: "Error processing files",
+        description: "There was an error processing your files. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setUploading(false);
+      setFiles([]);
     }
   };
 
